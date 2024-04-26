@@ -31,7 +31,7 @@ install_packages() {
             "Media (mpv, transmission, deadbeef)")
                 sudo dnf install -y mpv transmission deadbeef
                 ;;
-            "Communication (slack, skypeforlinux)")
+            "Communication (slack, skypeforlinux, vesktop)")
                 sudo dnf install -y slack skypeforlinux
                 sudo dnf install -y https://vencord.dev/download/vesktop/amd64/rpm
                 ;;
@@ -69,21 +69,40 @@ install_packages() {
     done
 }
 
-# Interactive package selection
-echo "Select the packages you want to install (separate choices with spaces):"
-for ((i=0; i<${#packages[@]}; i++)); do
-    echo "$((i+1)). ${packages[$i]}"
-done
-read -r -p "Enter your choices (e.g., 1 2 3): " selections
+# Interactive package selection menu
+select_packages() {
+    selected_packages=()
+    while true; do
+        clear
+        echo "Select packages to install:"
+        for ((i=0; i<${#packages[@]}; i++)); do
+            echo "$((i+1)). ${packages[$i]}"
+        done
+        echo "0. Install selected packages"
+        read -r -p "Enter your choice (0 to continue): " choice
 
-# Convert selections to an array
-selected_packages=()
-for selection in $selections; do
-    selected_packages+=("${packages[$selection-1]}")
-done
+        if [[ "$choice" -eq 0 ]]; then
+            break
+        elif [[ "$choice" -ge 1 && "$choice" -le "${#packages[@]}" ]]; then
+            selected_package="${packages[$choice-1]}"
+            if [[ "${selected_packages[@]}" =~ "$selected_package" ]]; then
+                echo "Already selected: $selected_package"
+            else
+                selected_packages+=("$selected_package")
+                echo "Added: $selected_package"
+            fi
+        else
+            echo "Invalid choice"
+        fi
+        read -n1 -r -p "Press any key to continue..."
+    done
+}
 
 # Ask if Snap should be installed
 read -r -p "Do you want to install Snap? (y/n): " snap_install
+
+# Interactive package selection
+select_packages
 
 # Install selected packages
 install_packages
